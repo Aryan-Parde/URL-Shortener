@@ -1,7 +1,7 @@
 from datetime import date, datetime, time, timedelta, timezone
 from typing import Dict, List, Optional, Union
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncConnection
 
@@ -25,6 +25,29 @@ async def _get_link_id(
             detail="Short code not found",
         )
     return link_id
+
+
+@router.get("/{short_code}/info")
+async def link_info(
+    short_code: str,
+    request: Request,
+    connection: AsyncConnection = Depends(get_connection),
+) -> Dict[str, str]:
+    result = await connection.execute(
+        text("SELECT long_url FROM links WHERE short_code = :short_code"),
+        {"short_code": short_code},
+    )
+    long_url = result.scalar_one_or_none()
+    if long_url is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Short code not found",
+        )
+    return {
+        "short_code": short_code,
+        "long_url": long_url,
+        "short_url": str(request.base_url) + f"r/{short_code}",
+    }
 
 
 @router.get("/{short_code}/total")

@@ -20,6 +20,21 @@ export async function shortenUrl(longUrl) {
 }
 
 /**
+ * Get link info (short_url, long_url) for a short code.
+ * GET /analytics/{short_code}/info  →  { short_code, short_url, long_url }
+ */
+export async function getLinkInfo(shortCode) {
+  const response = await fetch(`${API_BASE}/analytics/${shortCode}/info`);
+
+  if (!response.ok) {
+    const body = await response.json().catch(() => null);
+    throw new Error(body?.detail || `Server responded with ${response.status}`);
+  }
+
+  return response.json();
+}
+
+/**
  * Get total click count for a short code.
  * GET /analytics/{short_code}/total  →  { short_code, clicks }
  */
